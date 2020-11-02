@@ -211,7 +211,7 @@ namespace CalValEXLite
                     color = new Color(139, 0, 0);
                     break;
                 case 20:
-                    color = new Color(106, 240, 255);
+                    color = new Color(107, 240, 255);
                     break;
                 default:
                     color = Color.White;
