@@ -229,6 +229,8 @@ namespace CalValEXLite
                 projectile.netUpdate = true;
             }
 
+            projectile.DontOverlap(0.04f);
+
             IdleAI(center);
 
             projectile.rotation = projectile.velocity.ToRotation() + (float)Math.PI / 2f;
@@ -249,32 +251,6 @@ namespace CalValEXLite
         }
 
         /// <summary>
-        /// Setups the distance for the worm projectile NPC targetting.
-        /// </summary>
-        /// <returns>The max distance</returns>
-        public virtual float DistSetup() => 800f;
-
-        /// <summary>
-        /// Setups the max speed for the worm.
-        /// </summary>
-        /// <returns>The max speed</returns>
-        public virtual float MaxSpeedSetup() => 30f;
-
-        /// <summary>
-        /// Setups the speed for the worm projectile NPC targetting.
-        /// </summary>
-        /// <param name="vectorToNPCCenter">Vector to the NPCs' center</param>
-        /// <returns>The speed</returns>
-        public virtual float SpeedSetup(Vector2 vectorToNPCCenter)
-        {
-            if (vectorToNPCCenter.Length() > 600f)
-                return 0.8f;
-            if (vectorToNPCCenter.Length() > 300f)
-                return 0.6f;
-            return 0.4f;
-        }
-
-        /// <summary>
         /// Setups the speed for the worm projectile idle movement.
         /// </summary>
         /// <param name="vectorToPlayerCenter">Vector to the Players' center</param>
@@ -292,7 +268,7 @@ namespace CalValEXLite
         /// Max speed for idle movement. Default is half of max speed
         /// </summary>
         /// <returns>Max idle speed</returns>
-        public virtual float MaxIdleSpeedSetup() => MaxSpeedSetup() / 2f;
+        public virtual float MaxIdleSpeedSetup() => 15f;
         public virtual float MinIdleMovementDist() => 100f;
         private void IdleAI(Vector2 center)
         {
@@ -484,6 +460,19 @@ namespace CalValEXLite
             position -= Main.screenPosition;
             spriteBatch.Draw(texture, position, sourceRect, drawColor, projectile.rotation, origin, 1f, SpriteEffects.None, 0);
             return false;
+        }
+
+        public static void DontOverlap(this Projectile projectile, float overlapVelocity)
+        {
+            for (int i = 0; i < Main.maxProjectiles; i++)
+            {
+                Projectile other = Main.projectile[i];
+                if (i != projectile.whoAmI && other.active && other.owner == projectile.owner && Math.Abs(projectile.position.X - other.position.X) + Math.Abs(projectile.position.Y - other.position.Y) < projectile.width)
+                {
+                    if (projectile.position.X < other.position.X) projectile.velocity.X -= overlapVelocity; else projectile.velocity.X += overlapVelocity;
+                    if (projectile.position.Y < other.position.Y) projectile.velocity.Y -= overlapVelocity; else projectile.velocity.Y += overlapVelocity;
+                }
+            }
         }
     }
 }
