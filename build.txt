@@ -1,0 +1,4 @@
+displayName = Calamity's Vanities Lite
+author = Kawaggy, PotatoPerson and YuH
+version = 0.0.0.1
+sortAfter = CalValEX, CalamityMod

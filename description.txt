@@ -1,0 +1,23 @@
+Lite version of Calamity's Vanities. Removes the Calamity dependency.
+
+Description of the mod:
+
+Currently adds the following:
+
+- Over 60 cute pets! Including some with their own unique gimmicks!
+- A few Mounts 
+- 5 Hooks
+- A handful of wings 
+- A variety of placeable decorations
+- Some new critters to be found across your world
+- A large amount of vanity clothing, hats, and accessories
+
+Sprite credits: Kawaggy, KaiPanda, Blockaroz, William, YuH, Yharex87, TimerFun, caligulasAquarium, Krysmun, IbanPlay, Willowmaine, Enreden, Gamagamer64, L0st, Cooper, RyanLolz1, Vectix, Mochi, Leon, NnickykunN and MrPlague
+Code credits for Calamity's Vanities: Potato Person, Kawaggy, Hypera, Phupperbat, Seraph, Dominic Karma, Willowmaine
+Code credits for Calamity's Vanities Lite: Kawaggy
+
+Note: This mod is not an official addon to Calamity, rather just a fun fan made mod.
+
+Discord to Calamity's Vanities: https://discord.gg/Qgx8eRA
+
+Wiki to Calamity's Vanities: https://calamity-vanities.fandom.com/wiki/Calamity_Vanities_Wiki
