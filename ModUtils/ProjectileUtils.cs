@@ -428,6 +428,156 @@ namespace CalValEXLite
         public override bool PreDraw(SpriteBatch spriteBatch, Color drawColor) => projectile.DrawWorm(spriteBatch, drawColor, Texture);
     }
 
+    public abstract class FlyingPet : ModProjectile
+    {
+        private readonly float Speed;
+        private readonly float Inertia;
+        public override bool CloneNewInstances => true;
+
+        public FlyingPet(float speed, float inertia)
+        {
+            Speed = speed;
+            Inertia = inertia;
+        }
+
+        public virtual void SafeSetDefaults() { }
+        public sealed override void SetDefaults()
+        {
+            SafeSetDefaults();
+            projectile.penetrate = -1;
+            projectile.netImportant = true;
+            projectile.timeLeft *= 5;
+            projectile.friendly = true;
+            projectile.tileCollide = false;
+        }
+
+        public virtual bool FacesLeft => false;
+        public virtual bool ShouldFlip => true;
+        public virtual string AuraTexture => null;
+        public virtual string AuraGlowTexture => null;
+        public virtual string Glowmask => null;
+        public virtual float AuraRotation => 0f;
+        public virtual Vector2 Offset => default;
+        public virtual float TeleportDistance => 2000f;
+        public virtual void AddLight() { }
+        public virtual void PetFunctionality(Player player) { }
+        public int State { get => (int)projectile.localAI[1]; set => projectile.localAI[1] = value; }
+
+        /// <summary>
+        /// Gets called before normal behaviour happens. Use State (int) to know what State it is. It'll always be on 0, so if you want custom behaviour without the normal behaviour happening, change State to a different number.
+        /// </summary>
+        /// <param name="player">This projectiles' owner</param>
+        public virtual void CustomBehaviour(Player player) { }
+        private float rotation;
+        public sealed override void AI()
+        {
+            Player player = Main.player[projectile.owner];
+            PetFunctionality(player);
+
+            if (!player.active)
+            {
+                projectile.active = false;
+                projectile.netUpdate = true;
+                return;
+            }
+
+            Vector2 vectorToPlayer = player.Center + Offset - projectile.Center;
+            float distanceToPlayer = vectorToPlayer.Length();
+
+            if(ShouldFlip)
+            {
+                if (FacesLeft)
+                    projectile.spriteDirection = projectile.velocity.X > 0 ? -1 : 1;
+                else
+                    projectile.spriteDirection = projectile.velocity.X > 0 ? 1 : -1;
+            }
+
+            if (projectile.Distance(player.Center) > TeleportDistance)
+            {
+                projectile.position = player.Center;
+                projectile.velocity *= 0.1f;
+                projectile.netUpdate = true;
+            }
+
+            switch(State)
+            {
+                case 0:
+                    projectile.tileCollide = false;
+
+                    if (distanceToPlayer > 20f)
+                    {
+                        vectorToPlayer.Normalize();
+                        vectorToPlayer *= Speed;
+                        projectile.velocity = (projectile.velocity * (Inertia - 1) + vectorToPlayer) / Inertia;
+                    }
+                    else if(projectile.velocity == Vector2.Zero)
+                    {
+                        projectile.velocity.X = Main.rand.NextBool().ToDirectionInt() * 0.15f;
+                        projectile.velocity.Y = Main.rand.NextBool().ToDirectionInt() * 0.15f;
+                        projectile.netUpdate = true;
+                    }
+                    break;
+            }
+            AddLight();
+            rotation += AuraRotation;
+        }
+
+        public virtual bool SafePreDraw(SpriteBatch spriteBatch, Color lightColor) { return true; }
+        public sealed override bool PreDraw(SpriteBatch spriteBatch, Color lightColor)
+        {
+            if (!SafePreDraw(spriteBatch, lightColor))
+                return false;
+            if (AuraTexture != null)
+            {
+                Texture2D auraTexture = ModContent.GetTexture(AuraTexture);
+                Rectangle sourceRectangle = new Rectangle(0, 0, auraTexture.Width, auraTexture.Height);
+                Vector2 origin = new Vector2(auraTexture.Width, auraTexture.Height);
+                origin /= 2;
+                spriteBatch.Draw(auraTexture, projectile.Center - Main.screenPosition, sourceRectangle, lightColor, rotation, origin, 1f, SpriteEffects.None, 0);
+                if (AuraGlowTexture != null)
+                {
+                    Texture2D auraGlowmaskTexture = ModContent.GetTexture(AuraGlowTexture);
+                    Rectangle auraSourceRectangle = new Rectangle(0, 0, auraGlowmaskTexture.Width, auraGlowmaskTexture.Height);
+                    Vector2 auraOrigin = new Vector2(auraGlowmaskTexture.Width, auraGlowmaskTexture.Height);
+                    auraOrigin /= 2;
+                    spriteBatch.Draw(auraGlowmaskTexture, projectile.Center - Main.screenPosition, auraSourceRectangle, lightColor, rotation, auraOrigin, 1f, SpriteEffects.None, 0);
+                }
+            }
+            return base.PreDraw(spriteBatch, lightColor);
+        }
+
+        public virtual void SafePostDraw(SpriteBatch spriteBatch, Color lightColor) { }
+        public sealed override void PostDraw(SpriteBatch spriteBatch, Color lightColor)
+        {
+            SafePostDraw(spriteBatch, lightColor);
+            if (Glowmask != null)
+            {
+                Texture2D glowmaskTexture = ModContent.GetTexture(Glowmask);
+                Rectangle rectangle = new Rectangle(0, 0, glowmaskTexture.Width, glowmaskTexture.Height);
+                spriteBatch.Draw(glowmaskTexture, projectile.Center - Main.screenPosition, rectangle, Color.White, projectile.rotation, projectile.Size / 2f, 1f, SpriteEffects.None, 0f);
+            }
+            base.PostDraw(spriteBatch, lightColor);
+        }
+
+        public virtual void SafeSendExtraAI(BinaryWriter writer) { }
+        public sealed override void SendExtraAI(BinaryWriter writer)
+        {
+            writer.Write(projectile.localAI[0]);
+            writer.Write(projectile.localAI[1]);
+
+            SafeSendExtraAI(writer);
+        }
+
+        public virtual void SafeReceiveExtraAI(BinaryReader reader) { }
+        public sealed override void ReceiveExtraAI(BinaryReader reader)
+        {
+            projectile.localAI[0] = reader.ReadSingle();
+            projectile.localAI[1] = reader.ReadSingle();
+
+            SafeReceiveExtraAI(reader);
+        }
+    }
+
     public static class ProjectileUtils
     {
         public static void SpawnPet(this Player player, int projType) { if (player.ownedProjectileCounts[projType] <= 0 && player.whoAmI == Main.myPlayer) Projectile.NewProjectile(player.position, Vector2.Zero, projType, 0, 0f, player.whoAmI); }
