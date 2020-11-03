@@ -428,13 +428,14 @@ namespace CalValEXLite
         public override bool PreDraw(SpriteBatch spriteBatch, Color drawColor) => projectile.DrawWorm(spriteBatch, drawColor, Texture);
     }
 
-    public abstract class FlyingPet : ModProjectile
+    public abstract class PetBase : ModProjectile
     {
-        private readonly float Speed;
-        private readonly float Inertia;
+        public readonly float Speed;
+        public readonly float Inertia;
+
         public override bool CloneNewInstances => true;
 
-        public FlyingPet(float speed, float inertia)
+        public PetBase(float speed, float inertia)
         {
             Speed = speed;
             Inertia = inertia;
@@ -457,6 +458,7 @@ namespace CalValEXLite
         public virtual string AuraGlowTexture => null;
         public virtual string Glowmask => null;
         public virtual float AuraRotation => 0f;
+        public float rotation;
         public virtual Vector2 Offset => default;
         public virtual float TeleportDistance => 2000f;
         public virtual void AddLight() { }
@@ -464,64 +466,10 @@ namespace CalValEXLite
         public int State { get => (int)projectile.localAI[1]; set => projectile.localAI[1] = value; }
 
         /// <summary>
-        /// Gets called before normal behaviour happens. Use State (int) to know what State it is. It'll always be on 0, so if you want custom behaviour without the normal behaviour happening, change State to a different number.
+        /// Gets called before normal behaviour happens. Use State (int) to know what State it is.
         /// </summary>
         /// <param name="player">This projectiles' owner</param>
         public virtual void CustomBehaviour(Player player) { }
-        private float rotation;
-        public sealed override void AI()
-        {
-            Player player = Main.player[projectile.owner];
-            PetFunctionality(player);
-
-            if (!player.active)
-            {
-                projectile.active = false;
-                projectile.netUpdate = true;
-                return;
-            }
-
-            Vector2 vectorToPlayer = player.Center + Offset - projectile.Center;
-            float distanceToPlayer = vectorToPlayer.Length();
-
-            if(ShouldFlip)
-            {
-                if (FacesLeft)
-                    projectile.spriteDirection = projectile.velocity.X > 0 ? -1 : 1;
-                else
-                    projectile.spriteDirection = projectile.velocity.X > 0 ? 1 : -1;
-            }
-
-            if (projectile.Distance(player.Center) > TeleportDistance)
-            {
-                projectile.position = player.Center;
-                projectile.velocity *= 0.1f;
-                projectile.netUpdate = true;
-            }
-
-            switch(State)
-            {
-                case 0:
-                    projectile.tileCollide = false;
-
-                    if (distanceToPlayer > 20f)
-                    {
-                        vectorToPlayer.Normalize();
-                        vectorToPlayer *= Speed;
-                        projectile.velocity = (projectile.velocity * (Inertia - 1) + vectorToPlayer) / Inertia;
-                    }
-                    else if(projectile.velocity == Vector2.Zero)
-                    {
-                        projectile.velocity.X = Main.rand.NextBool().ToDirectionInt() * 0.15f;
-                        projectile.velocity.Y = Main.rand.NextBool().ToDirectionInt() * 0.15f;
-                        projectile.netUpdate = true;
-                    }
-                    break;
-            }
-            AddLight();
-            rotation += AuraRotation;
-        }
-
         public virtual bool SafePreDraw(SpriteBatch spriteBatch, Color lightColor) { return true; }
         public sealed override bool PreDraw(SpriteBatch spriteBatch, Color lightColor)
         {
@@ -575,6 +523,66 @@ namespace CalValEXLite
             projectile.localAI[1] = reader.ReadSingle();
 
             SafeReceiveExtraAI(reader);
+        }
+    }
+
+    public abstract class FlyingPet : PetBase
+    {
+        public override bool CloneNewInstances => true;
+
+        public FlyingPet(float speed, float inertia) : base(speed, inertia) { }
+
+        public sealed override void AI()
+        {
+            Player player = Main.player[projectile.owner];
+            PetFunctionality(player);
+
+            if (!player.active)
+            {
+                projectile.active = false;
+                projectile.netUpdate = true;
+                return;
+            }
+
+            Vector2 vectorToPlayer = player.Center + Offset - projectile.Center;
+            float distanceToPlayer = vectorToPlayer.Length();
+
+            if(ShouldFlip)
+            {
+                if (FacesLeft)
+                    projectile.spriteDirection = projectile.velocity.X > 0 ? -1 : 1;
+                else
+                    projectile.spriteDirection = projectile.velocity.X > 0 ? 1 : -1;
+            }
+
+            if (projectile.Distance(player.Center) > TeleportDistance)
+            {
+                projectile.position = player.Center;
+                projectile.velocity *= 0.1f;
+                projectile.netUpdate = true;
+            }
+
+            switch(State)
+            {
+                case 0:
+                    projectile.tileCollide = false;
+
+                    if (distanceToPlayer > 20f)
+                    {
+                        vectorToPlayer.Normalize();
+                        vectorToPlayer *= Speed;
+                        projectile.velocity = (projectile.velocity * (Inertia - 1) + vectorToPlayer) / Inertia;
+                    }
+                    else if(projectile.velocity == Vector2.Zero)
+                    {
+                        projectile.velocity.X = Main.rand.NextBool().ToDirectionInt() * 0.15f;
+                        projectile.velocity.Y = Main.rand.NextBool().ToDirectionInt() * 0.15f;
+                        projectile.netUpdate = true;
+                    }
+                    break;
+            }
+            AddLight();
+            rotation += AuraRotation;
         }
     }
 
