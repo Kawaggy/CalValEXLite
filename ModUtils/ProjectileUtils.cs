@@ -18,6 +18,8 @@ namespace CalValEXLite
         private readonly float PullSpeed;
         private readonly string TexturePath;
 
+        public override bool CloneNewInstances => true;
+
         public ModHookProjectile(string name, int maxHooks, int maxHooksOut, float hookLength, float retreatSpeed, float pullSpeed, string texturePath)
         {
             HookName = name;
@@ -68,6 +70,8 @@ namespace CalValEXLite
     {
         public readonly int Size;
         public readonly string PartName;
+
+        public override bool CloneNewInstances => true;
 
         /// <summary>
         /// Makes a ModProjectile that has common Worm Part things
@@ -140,6 +144,9 @@ namespace CalValEXLite
         private readonly int BodyType;
         private readonly int TailType;
         private readonly int SegmentCount;
+
+        public override bool CloneNewInstances => true;
+
         /// <summary>
         /// Makes a new Worm Head
         /// </summary>
@@ -301,6 +308,9 @@ namespace CalValEXLite
     {
         private readonly int BodyType;
         private readonly int TailType;
+
+        public override bool CloneNewInstances => true;
+
         /// <summary>
         /// Makes a new Worm Head or Tail
         /// </summary>
