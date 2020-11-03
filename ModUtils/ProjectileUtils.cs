@@ -481,14 +481,14 @@ namespace CalValEXLite
                 Rectangle sourceRectangle = new Rectangle(0, 0, auraTexture.Width, auraTexture.Height);
                 Vector2 origin = new Vector2(auraTexture.Width, auraTexture.Height);
                 origin /= 2;
-                spriteBatch.Draw(auraTexture, projectile.Center - Main.screenPosition, sourceRectangle, lightColor, rotation, origin, 1f, SpriteEffects.None, 0);
+                spriteBatch.Draw(auraTexture, projectile.Center - Main.screenPosition, sourceRectangle, lightColor, rotation, origin, projectile.scale, SpriteEffects.None, 0);
                 if (AuraGlowTexture != null)
                 {
                     Texture2D auraGlowmaskTexture = ModContent.GetTexture(AuraGlowTexture);
                     Rectangle auraSourceRectangle = new Rectangle(0, 0, auraGlowmaskTexture.Width, auraGlowmaskTexture.Height);
                     Vector2 auraOrigin = new Vector2(auraGlowmaskTexture.Width, auraGlowmaskTexture.Height);
                     auraOrigin /= 2;
-                    spriteBatch.Draw(auraGlowmaskTexture, projectile.Center - Main.screenPosition, auraSourceRectangle, lightColor, rotation, auraOrigin, 1f, SpriteEffects.None, 0);
+                    spriteBatch.Draw(auraGlowmaskTexture, projectile.Center - Main.screenPosition, auraSourceRectangle, lightColor, rotation, auraOrigin, projectile.scale, SpriteEffects.None, 0);
                 }
             }
             return base.PreDraw(spriteBatch, lightColor);
@@ -502,7 +502,7 @@ namespace CalValEXLite
             {
                 Texture2D glowmaskTexture = ModContent.GetTexture(Glowmask);
                 Rectangle rectangle = new Rectangle(0, 0, glowmaskTexture.Width, glowmaskTexture.Height);
-                spriteBatch.Draw(glowmaskTexture, projectile.Center - Main.screenPosition, rectangle, Color.White, projectile.rotation, projectile.Size / 2f, 1f, SpriteEffects.None, 0f);
+                spriteBatch.Draw(glowmaskTexture, projectile.Center - Main.screenPosition, rectangle, Color.White, projectile.rotation, projectile.Size / 2f, projectile.scale, SpriteEffects.None, 0f);
             }
             base.PostDraw(spriteBatch, lightColor);
         }
@@ -626,7 +626,7 @@ namespace CalValEXLite
             origin /= 2;
             Vector2 position = projectile.Center;
             position -= Main.screenPosition;
-            spriteBatch.Draw(texture, position, sourceRect, drawColor, projectile.rotation, origin, 1f, SpriteEffects.None, 0);
+            spriteBatch.Draw(texture, position, sourceRect, drawColor, projectile.rotation, origin, projectile.scale, SpriteEffects.None, 0);
             return false;
         }
 
