@@ -533,6 +533,8 @@ namespace CalValEXLite
 
         public FlyingPet(float speed, float inertia) : base(speed, inertia) { }
 
+        public override Vector2 Offset => new Vector2(48f * -Main.player[projectile.owner].direction, -50f);
+
         public sealed override void AI()
         {
             Player player = Main.player[projectile.owner];
