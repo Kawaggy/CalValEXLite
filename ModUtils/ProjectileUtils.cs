@@ -450,6 +450,7 @@ namespace CalValEXLite
             projectile.timeLeft *= 5;
             projectile.friendly = true;
             projectile.tileCollide = false;
+            projectile.aiStyle = -1;
         }
 
         public virtual bool FacesLeft => false;
