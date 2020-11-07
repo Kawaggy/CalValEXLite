@@ -26,7 +26,7 @@ namespace CalValEXLite.Projectiles.Pets.Worms.DesertScourge
     {
         public DesertScourgeBody() : base(
             15, 
-            "Desert Scourge Body", 
+            "Desert Scourge Body",
             ModContent.ProjectileType<DesertScourgeBody>(), 
             ModContent.ProjectileType<DesertScourgeTail>()) { }
 
@@ -43,8 +43,8 @@ namespace CalValEXLite.Projectiles.Pets.Worms.DesertScourge
     {
         public DesertScourgeTail() : base(
             12, 
-            "Desert Scourge Tail", 
-            ModContent.ProjectileType<DesertScourgeBody>(), 
+            "Desert Scourge Tail",
+            ModContent.ProjectileType<DesertScourgeBody>(),
             ModContent.ProjectileType<DesertScourgeTail>()) { }
 
         public override bool? CanCutTiles() => false;

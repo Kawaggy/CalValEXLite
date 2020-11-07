@@ -1,4 +1,5 @@
-﻿using Terraria;
+﻿using Microsoft.Xna.Framework;
+using Terraria;
 using Terraria.ModLoader;
 
 namespace CalValEXLite.Projectiles.Pets.Worms.AquaticScourge
@@ -27,7 +28,7 @@ namespace CalValEXLite.Projectiles.Pets.Worms.AquaticScourge
         public AquaticScourgeBody() : base(
             15,
             "Aquatic Scourge Body",
-            ModContent.ProjectileType<AquaticScourgeBody>(),
+            ModContent.ProjectileType<AquaticScourgeBody>(), 
             ModContent.ProjectileType<AquaticScourgeTail>())
         { }
 

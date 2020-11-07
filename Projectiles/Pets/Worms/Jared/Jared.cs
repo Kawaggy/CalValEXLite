@@ -38,7 +38,7 @@ namespace CalValEXLite.Projectiles.Pets.Worms.Jared
     {
         public JaredBody() : base(
             44, 
-            "Jared Body", 
+            "Jared Body",
             ModContent.ProjectileType<JaredBody>(), 
             ModContent.ProjectileType<JaredTail>()) { }
 
@@ -88,8 +88,8 @@ namespace CalValEXLite.Projectiles.Pets.Worms.Jared
     {
         public JaredTail() : base(
             40, 
-            "Jared Tail", 
-            ModContent.ProjectileType<JaredBody>(), 
+            "Jared Tail",
+            ModContent.ProjectileType<JaredBody>(),
             ModContent.ProjectileType<JaredTail>()) { }
 
         public override bool? CanCutTiles() => false;

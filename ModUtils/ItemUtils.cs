@@ -97,6 +97,7 @@ namespace CalValEXLite
         private readonly int ProjType;
         private readonly int BuffType;
         private readonly int Value;
+
         public PetItem(string name, string tooltip, Vector2 size, int rare, int petType, int buffType, int value)
         {
             ItemName = name;

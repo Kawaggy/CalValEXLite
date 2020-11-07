@@ -41,12 +41,6 @@ namespace CalValEXLite.Projectiles.Pets.Worms.AstrumDeus
             6)
         { }
 
-        public override bool SafePreSetDefaults()
-        {
-            projectile.scale = 0.75f;
-            return base.SafePreSetDefaults();
-        }
-
         public override bool? CanCutTiles() => false;
 
         public override void PetFunctionality(Player player)
@@ -67,7 +61,7 @@ namespace CalValEXLite.Projectiles.Pets.Worms.AstrumDeus
         public AstrumDeusBody() : base(
             14,
             "Astrum Deus Body",
-            ModContent.ProjectileType<AstrumDeusBody>(),
+            ModContent.ProjectileType<AstrumDeusBody>(), 
             ModContent.ProjectileType<AstrumDeusTail>())
         { }
 

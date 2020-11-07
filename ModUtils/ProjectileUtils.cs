@@ -1,6 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using Terraria;
 using Terraria.ID;
@@ -18,8 +19,6 @@ namespace CalValEXLite
         private readonly float PullSpeed;
         private readonly string TexturePath;
 
-        public override bool CloneNewInstances => true;
-
         public ModHookProjectile(string name, int maxHooks, int maxHooksOut, float hookLength, float retreatSpeed, float pullSpeed, string texturePath)
         {
             HookName = name;
@@ -31,47 +30,60 @@ namespace CalValEXLite
             TexturePath = texturePath;
         }
 
-        public override void SetStaticDefaults()
+        public sealed override void SetStaticDefaults()
         {
             DisplayName.SetDefault(HookName);
         }
 
         public virtual void SafeSetDefaults() { }
-        public override void SetDefaults()
+        public sealed override void SetDefaults()
         {
             projectile.CloneDefaults(ProjectileID.GemHookAmethyst);
             SafeSetDefaults();
         }
 
-        public override bool? CanUseGrapple(Player player)
+        public sealed override bool? CanUseGrapple(Player player)
         {
             int hooksOut = 0;
+            int hooksOnTile = 0;
             for (int i = 0; i < Main.maxProjectiles; i++)
+            {
                 if (Main.projectile[i].active && Main.projectile[i].owner == Main.myPlayer && Main.projectile[i].type == projectile.type)
+                {
+                    if (Main.projectile[i].ai[0] != 2)
+                    {
+                        if (OnlyOneHookOut)
+                            return false;
+                    }
+                    else
+                        hooksOnTile++;
                     hooksOut++;
-
-            if (hooksOut > HooksOutMax)
+                }
+            }
+            if (hooksOnTile == HooksOutMax && hooksOut <= HooksOutMax)
+                return true;
+            if (hooksOut > HooksOutMax - 1)
                 return false;
             return true;
         }
 
-        public override float GrappleRange() => HookLength;
+        public virtual bool OnlyOneHookOut => false;
 
-        public override void NumGrappleHooks(Player player, ref int numHooks) => numHooks = HooksMax;
+        public sealed override float GrappleRange() => HookLength;
 
-        public override void GrapplePullSpeed(Player player, ref float speed) => speed = PullSpeed;
+        public sealed override void NumGrappleHooks(Player player, ref int numHooks) => numHooks = HooksMax;
 
-        public override void GrappleRetreatSpeed(Player player, ref float speed) => speed = RetreatSpeed;
+        public sealed override void GrapplePullSpeed(Player player, ref float speed) => speed = PullSpeed;
 
-        public override bool PreDrawExtras(SpriteBatch spriteBatch) => projectile.DrawHook(spriteBatch, TexturePath);
+        public sealed override void GrappleRetreatSpeed(Player player, ref float speed) => speed = RetreatSpeed;
+
+        public sealed override bool PreDrawExtras(SpriteBatch spriteBatch) => projectile.DrawHook(spriteBatch, TexturePath);
     }
 
     public abstract class ModWorm : ModProjectile
     {
         public readonly int Size;
         public readonly string PartName;
-
-        public override bool CloneNewInstances => true;
 
         /// <summary>
         /// Makes a ModProjectile that has common Worm Part things
@@ -144,8 +156,6 @@ namespace CalValEXLite
         private readonly int BodyType;
         private readonly int TailType;
         private readonly int SegmentCount;
-
-        public override bool CloneNewInstances => true;
 
         /// <summary>
         /// Makes a new Worm Head
@@ -308,9 +318,6 @@ namespace CalValEXLite
     {
         private readonly int BodyType;
         private readonly int TailType;
-
-        public override bool CloneNewInstances => true;
-
         /// <summary>
         /// Makes a new Worm Head or Tail
         /// </summary>
@@ -433,8 +440,6 @@ namespace CalValEXLite
         public readonly float Speed;
         public readonly float Inertia;
 
-        public override bool CloneNewInstances => true;
-
         public PetBase(float speed, float inertia)
         {
             Speed = speed;
@@ -464,6 +469,7 @@ namespace CalValEXLite
         public virtual float TeleportDistance => 2000f;
         public virtual void AddLight() { }
         public virtual void PetFunctionality(Player player) { }
+        public virtual void AddAnimation() { }
         public int State { get => (int)projectile.localAI[1]; set => projectile.localAI[1] = value; }
 
         /// <summary>
@@ -529,12 +535,11 @@ namespace CalValEXLite
 
     public abstract class FlyingPet : PetBase
     {
-        public override bool CloneNewInstances => true;
-
         public FlyingPet(float speed, float inertia) : base(speed, inertia) { }
 
         public override Vector2 Offset => new Vector2(48f * -Main.player[projectile.owner].direction, -50f);
 
+        public const int Flying = 0;
         public sealed override void AI()
         {
             Player player = Main.player[projectile.owner];
@@ -543,7 +548,6 @@ namespace CalValEXLite
             if (!player.active)
             {
                 projectile.active = false;
-                projectile.netUpdate = true;
                 return;
             }
 
@@ -565,9 +569,10 @@ namespace CalValEXLite
                 projectile.netUpdate = true;
             }
 
+            CustomBehaviour(player);
             switch(State)
             {
-                case 0:
+                case Flying:
                     projectile.tileCollide = false;
 
                     if (distanceToPlayer > 20f)
@@ -586,6 +591,307 @@ namespace CalValEXLite
             }
             AddLight();
             rotation += AuraRotation;
+
+            AddAnimation();
+        }
+    }
+
+    public abstract class WalkingPet : PetBase
+    {
+        public WalkingPet(float walkingSpeed, float flyingSpeed) : base(0f, 0f)
+        {
+            WalkingSpeed = walkingSpeed;
+            FlyingSpeed = flyingSpeed;
+        }
+        private readonly float FlyingSpeed;
+        private readonly float WalkingSpeed;
+
+        /// <summary>
+        /// The range that this pet will start to walk. It'll be used as the value for FlyingRange and BackToWalkingRange if their values is not set (multiplied by a constant value).
+        /// </summary>
+        public virtual int WalkingRange => 85;
+        public virtual int FlyingRange => -1;
+        public virtual int BackToWalkingRange => -1;
+        public virtual float FlyingSpeedMult => 1.5f;
+        public virtual float WalkingSpeedMult => 0.25f;
+        public virtual float Gravity => 0.4f;
+        public virtual bool CanFly => true;
+
+        public const float flyingRangeMultiplier = 5.88235294f;
+        public const float backToWalkingRangeMultiplier = 2.35294118f;
+        public const int Walking = 0;
+        public const int Flying = 1;
+        public sealed override void AI()
+        {
+            Player player = Main.player[projectile.owner];
+            PetFunctionality(player);
+
+            if (!player.active)
+            {
+                projectile.active = false;
+                return;
+            }
+
+            bool left = false;
+            bool right = false;
+            bool flag = false;
+            bool jump = false;
+            int range = WalkingRange;
+            if (player.position.X + (player.width / 2) < projectile.position.X + (projectile.width / 2) - range)
+            {
+                left = true;
+            }
+            else if (player.position.X + (player.width / 2) > projectile.position.X + (projectile.width / 2) + range)
+            {
+                right = true;
+            }
+
+            int flyingRange = (int)(WalkingRange * flyingRangeMultiplier);
+            if (FlyingRange != -1)
+                flyingRange = FlyingRange;
+            if (State == Flying || State == Walking)
+            {
+                if (CanFly)
+                {
+                    if (player.rocketDelay2 > 0)
+                        State = Flying;
+                }
+            }
+
+            Vector2 projectileCenter = new Vector2(projectile.position.X + (projectile.width * 0.5f), projectile.position.Y + (projectile.height * 0.5f));
+            float playerX = player.position.X + (player.width / 2) - projectileCenter.X;
+            float playerY = player.position.Y + (player.height / 2) - projectile.Center.Y;
+            float sqrt = (float)Math.Sqrt(playerX * playerX + playerY * playerY);
+
+            if (projectile.Distance(player.Center) > TeleportDistance)
+            {
+                projectile.position = player.Center;
+                projectile.velocity *= 0.1f;
+                projectile.netUpdate = true;
+            }
+
+            if (State == Flying || State == Walking)
+            {
+                if (CanFly)
+                {
+                    if (sqrt > flyingRange && sqrt < TeleportDistance)
+                    {
+                        if (playerY > 0f && projectile.velocity.Y < 0f)
+                            projectile.velocity.Y = 0f;
+                        if (playerY < 0f && projectile.velocity.Y > 0f)
+                            projectile.velocity.Y = 0f;
+
+                        State = Flying;
+                    }
+                }
+            }
+            CustomBehaviour(player);
+            switch(State)
+            {
+                case Walking:
+                    projectile.tileCollide = true;
+
+                    if (left)
+                    {
+                        if (projectile.velocity.X > -3.5)
+                            projectile.velocity.X -= WalkingSpeed;
+                        else
+                            projectile.velocity.X -= WalkingSpeed * WalkingSpeedMult;
+                    }
+                    else if (right)
+                    {
+                        if (projectile.velocity.X < 3.5)
+                            projectile.velocity.X += WalkingSpeed;
+                        else
+                            projectile.velocity.X += WalkingSpeed * WalkingSpeedMult;
+                    }
+                    else
+                    {
+                        projectile.velocity.X *= 0.9f;
+                        if (projectile.velocity.X >= 0f - WalkingSpeed && projectile.velocity.X <= WalkingSpeed)
+                            projectile.velocity.X = 0f;
+                    }
+
+                    if (left || right)
+                    {
+                        if (ShouldFlip)
+                        {
+                            if (FacesLeft)
+                                projectile.spriteDirection = projectile.velocity.X > 0 ? -1 : 1;
+                            else
+                                projectile.spriteDirection = projectile.velocity.X > 0 ? 1 : -1;
+                        }
+
+                        int i = (int)(projectile.position.X + (projectile.width / 2)) / 16;
+                        int j = (int)(projectile.position.Y + (projectile.height / 2)) / 16;
+
+                        if (left)
+                            i--;
+
+                        if (right)
+                            i++;
+
+                        i += (int)projectile.velocity.X;
+                        if (WorldGen.SolidTile(i, j))
+                            jump = true;
+                    }
+
+                    if (player.position.Y + player.head - 8f > projectile.position.Y + projectile.height)
+                        flag = true;
+                    Collision.StepUp(ref projectile.position, ref projectile.velocity, projectile.width, projectile.height, ref projectile.stepSpeed, ref projectile.gfxOffY);
+                    if (projectile.velocity.Y == 0)
+                    {
+                        if (!flag && (projectile.velocity.X < 0f || projectile.velocity.X > 0f))
+                        {
+                            int i = (int)(projectile.position.X + (projectile.width / 2)) / 16;
+                            int j = (int)(projectile.position.Y + (projectile.height / 2)) / 16 + 1;
+
+                            if (left)
+                                i--;
+                            if (right)
+                                i++;
+
+                            WorldGen.SolidTile(i, j);
+                        }
+
+                        if (jump)
+                        {
+                            int i = (int)(projectile.position.X + (projectile.width / 2)) / 16;
+                            int j = (int)(projectile.position.Y + projectile.height) / 16 + 1;
+                            if (WorldGen.SolidTile(i, j) || Main.tile[i, j].halfBrick() || Main.tile[i, j].slope() > 0)
+                            {
+                                try
+                                {
+                                    i = (int)(projectile.position.X + (projectile.width / 2)) / 16;
+                                    j = (int)(projectile.position.Y + (projectile.height / 2)) / 16;
+                                    if (left)
+                                        i--;
+                                    if (right)
+                                        i++;
+
+                                    i += (int)projectile.velocity.X;
+
+                                    if (!WorldGen.SolidTile(i, j - 1) && !WorldGen.SolidTile(i, j - 2))
+                                        projectile.velocity.Y = -5.1f;
+                                    else if (!WorldGen.SolidTile(i, j - 2))
+                                        projectile.velocity.Y = -7.1f;
+                                    else if (WorldGen.SolidTile(i, j - 5))
+                                        projectile.velocity.Y = -11.1f;
+                                    else if (WorldGen.SolidTile(i, j - 4))
+                                        projectile.velocity.Y = -10.1f;
+                                    else
+                                        projectile.velocity.Y = -9.1f;
+                                }
+                                catch
+                                {
+                                    projectile.velocity.Y = -9.1f;
+                                }
+                            }
+                        }
+                    }
+
+                    float speedLimit = 6.5f;
+                    if (projectile.velocity.X > speedLimit)
+                        projectile.velocity.X = speedLimit;
+
+                    if (projectile.velocity.X < 0f - speedLimit)
+                        projectile.velocity.X = 0f - speedLimit;
+                    if (projectile.velocity.X < 0f)
+                        projectile.direction = -1;
+
+                    if (projectile.velocity.X > 0f)
+                        projectile.direction = 1;
+
+                    if (projectile.velocity.X > WalkingSpeed && right)
+                        projectile.direction = 1;
+
+                    if (projectile.velocity.X < 0f - WalkingSpeed && left)
+                        projectile.direction = -1;
+
+                    projectile.velocity.Y += Gravity;
+
+                    if (projectile.velocity.Y > 10f)
+                        projectile.velocity.Y = 10f;
+                    break;
+                case Flying:
+                    if (!CanFly)
+                    {
+                        State = Walking;
+                    }
+                    projectile.tileCollide = false;
+                    int backToWalkingRange = (int)(WalkingRange * backToWalkingRangeMultiplier);
+                    if (BackToWalkingRange != -1)
+                        backToWalkingRange = BackToWalkingRange;
+
+                    projectileCenter = new Vector2(projectile.position.X + (projectile.width * 0.5f), projectile.position.Y + (projectile.height * 0.5f));
+                    playerX = player.position.X + (player.width / 2) - projectileCenter.X;
+                    playerY = player.position.Y + (player.height / 2) - projectileCenter.Y;
+                    sqrt = (float)Math.Sqrt(playerX * playerX + playerY * playerY);
+
+                    if (sqrt < backToWalkingRange && player.velocity.Y == 0f && projectile.position.Y + projectile.height <= player.position.Y + player.height && !Collision.SolidCollision(projectile.position, projectile.width, projectile.height))
+                    {
+                        State = Walking;
+                        if (projectile.velocity.Y < -6f)
+                            projectile.velocity.Y = -6f;
+                    }
+
+                    if (sqrt < 60f)
+                    {
+                        playerX = projectile.velocity.X;
+                        playerY = projectile.velocity.Y;
+                    }
+                    else
+                    {
+                        sqrt = 10f / sqrt;
+                        playerX *= sqrt;
+                        playerY *= sqrt;
+                    }
+
+                    if (projectile.velocity.X < playerX)
+                    {
+                        projectile.velocity.X += FlyingSpeed;
+                        if (projectile.velocity.X < 0f)
+                            projectile.velocity.X += FlyingSpeed * FlyingSpeedMult;
+                    }
+
+                    if (projectile.velocity.X > playerX)
+                    {
+                        projectile.velocity.X -= FlyingSpeed;
+                        if (projectile.velocity.X > 0f)
+                            projectile.velocity.X -= FlyingSpeed * FlyingSpeedMult;
+                    }
+
+                    if (projectile.velocity.Y < playerY)
+                    {
+                        projectile.velocity.Y += FlyingSpeed;
+                        if (projectile.velocity.Y < 0f)
+                            projectile.velocity.Y += FlyingSpeed * FlyingSpeedMult;
+                    }
+
+                    if (projectile.velocity.Y > playerY)
+                    {
+                        projectile.velocity.Y -= FlyingSpeed;
+                        if (projectile.velocity.Y > 0f)
+                            projectile.velocity.Y -= FlyingSpeed * FlyingSpeedMult;
+                    }
+
+                    if (ShouldFlip)
+                    {
+                        if (FacesLeft)
+                            projectile.spriteDirection = projectile.velocity.X > 0 ? -1 : 1;
+                        else
+                            projectile.spriteDirection = projectile.velocity.X > 0 ? 1 : -1;
+                    }
+
+                    projectile.rotation = (float)Math.Atan2(projectile.velocity.Y, projectile.velocity.X);
+                    if (projectile.spriteDirection != -1)
+                        projectile.rotation += 3.14f;
+                    break;
+            }
+            AddLight();
+            rotation += AuraRotation;
+
+            AddAnimation();
         }
     }
 
@@ -644,6 +950,51 @@ namespace CalValEXLite
                     if (projectile.position.Y < other.position.Y) projectile.velocity.Y -= overlapVelocity; else projectile.velocity.Y += overlapVelocity;
                 }
             }
+        }
+
+        public static void SpawnSegment(this Projectile projectile, Player player, int BodyType, int TailType)
+        {
+            if (projectile.ai[0] == 0)
+            {
+                if (projectile.type == BodyType)
+                {
+                    if (projectile.localAI[1] > 1)
+                    {
+                        projectile.ai[0] = Projectile.NewProjectile(player.Center, Vector2.Zero, BodyType, projectile.damage, projectile.knockBack, projectile.owner);
+                        Main.projectile[(int)projectile.ai[0]].ai[1] = projectile.whoAmI;
+                        Main.projectile[(int)projectile.ai[0]].localAI[1] = projectile.localAI[1] - 1f;
+                        projectile.netUpdate = true;
+                    }
+                    else
+                    {
+                        projectile.ai[0] = Projectile.NewProjectile(player.Center, Vector2.Zero, TailType, projectile.damage, projectile.knockBack, projectile.owner);
+                        Main.projectile[(int)projectile.ai[0]].ai[1] = projectile.whoAmI;
+                        Main.projectile[(int)projectile.ai[0]].localAI[1] = projectile.localAI[1] - 1f;
+                        projectile.netUpdate = true;
+                    }
+                }
+            }
+        }
+
+        public static bool DespawnSegment(this Projectile projectile, int BodyType, int TailType)
+        {
+            if (projectile.type == BodyType)
+            {
+                if (!Main.projectile[(int)projectile.ai[0]].active || !Main.projectile[(int)projectile.ai[1]].active)
+                {
+                    projectile.active = false;
+                    return false;
+                }
+            }
+            else if (projectile.type == TailType)
+            {
+                if (!Main.projectile[(int)projectile.ai[1]].active)
+                {
+                    projectile.active = false;
+                    return false;
+                }
+            }
+            return true;
         }
     }
 }
