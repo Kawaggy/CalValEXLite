@@ -165,6 +165,48 @@ namespace CalValEXLite
         }
     }
 
+    public abstract class ModPaintingItem : ModItem
+    {
+        private readonly string PaintingName;
+        private readonly string FlavourText;
+        private readonly string Author;
+        private readonly int TileType;
+        private readonly int Rare;
+        private readonly Vector2 Size;
+        public ModPaintingItem(string name, int rare, Vector2 size, string author, string flavourText, int tileType)
+        {
+            PaintingName = name;
+            FlavourText = flavourText;
+            Author = author;
+            TileType = tileType;
+            Rare = rare;
+            Size = size;
+        }
+
+        public sealed override void SetStaticDefaults()
+        {
+            DisplayName.SetDefault(PaintingName);
+            Tooltip.SetDefault(Author + "\n" + FlavourText);
+        }
+
+        public sealed override void SetDefaults()
+        {
+            item.width = (int)Size.X;
+            item.height = (int)Size.Y;
+            item.useStyle = ItemUseStyleID.SwingThrow;
+            item.useTurn = true;
+            item.useAnimation = 15;
+            item.useTime = 10;
+            item.autoReuse = true;
+            item.maxStack = 99;
+            item.consumable = true;
+            item.createTile = TileType;
+            item.rare = Rare;
+        }
+
+        public sealed override void ModifyTooltips(List<TooltipLine> tooltips) => ItemUtils.CheckRarity(Rare, tooltips);
+    }
+
     public static class ItemUtils
     {
         public static void CheckRarity(int Rare, List<TooltipLine> tooltips)

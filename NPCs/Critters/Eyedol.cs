@@ -22,7 +22,6 @@ namespace CalValEXLite.NPCs.Critters
             npc.defense = 0;
             if (CalValEXLite.calamityMod != null)
             {
-                npc.lifeMax = 100;
                 if ((bool)CalValEXLite.calamityMod.Call("GetBossDowned", "providence"))
                 {
                     npc.lifeMax = 500;
@@ -33,7 +32,7 @@ namespace CalValEXLite.NPCs.Critters
             npc.lavaImmune = true;
         }
 
-        private enum Frames : int
+        internal enum Frames : int
         {
             Up = 0,
             Rightup,

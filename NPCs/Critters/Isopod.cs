@@ -48,7 +48,7 @@ namespace CalValEXLite.NPCs.Critters
         {
             if (npc.life <= 0)
                 for (int i = 1; i < 4; i++)
-                    Gore.NewGore(npc.position, npc.velocity, mod.GetGoreSlot("ExtraTextures/Gores/Isopod_Gore" + i), 1f);
+                    Gore.NewGore(npc.position, npc.velocity, mod.GetGoreSlot("Gores/Isopod/Isopod_Gore" + i), 1f);
         }
     }
 }
