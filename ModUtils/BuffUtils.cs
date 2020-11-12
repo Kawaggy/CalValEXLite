@@ -27,7 +27,7 @@ namespace CalValEXLite
                 Main.lightPet[Type] = true;
         }
 
-        public virtual void PetFunctionality(Player player) { }
+        public abstract void PetFunctionality(Player player);
 
         public sealed override void Update(Player player, ref int buffIndex)
         {

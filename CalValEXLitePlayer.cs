@@ -4,11 +4,13 @@ namespace CalValEXLite
 {
     public class CalValEXLitePlayer : ModPlayer
     {
+        //WORMS
         public bool JaredPet;
         public bool DesertScourgePet;
         public bool AquaticScourgePet;
         public bool AstrumDeusPet;
 
+        //GEMS
         public bool AmberGem;
         public bool AmethistGem;
         public bool CrystalGem;
@@ -17,6 +19,11 @@ namespace CalValEXLite
         public bool RubyGem;
         public bool SaphireGem;
         public bool TopazGem;
+
+        //FLYING
+        public bool AeroSlimePet;
+
+        //WALKING
 
         public void ResetThings()
         {
@@ -33,6 +40,8 @@ namespace CalValEXLite
             RubyGem = false;
             SaphireGem = false;
             TopazGem = false;
+
+            AeroSlimePet = false;
         }
 
         public override void ResetEffects() => ResetThings();

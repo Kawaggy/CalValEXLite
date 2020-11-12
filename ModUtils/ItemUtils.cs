@@ -165,28 +165,26 @@ namespace CalValEXLite
         }
     }
 
-    public abstract class ModPaintingItem : ModItem
+    public abstract class BaseTileItem : ModItem
     {
-        private readonly string PaintingName;
-        private readonly string FlavourText;
-        private readonly string Author;
+        private readonly string TileItemName;
         private readonly int TileType;
         private readonly int Rare;
         private readonly Vector2 Size;
-        public ModPaintingItem(string name, int rare, Vector2 size, string author, string flavourText, int tileType)
+        private readonly string TileItemTooltip;
+        public BaseTileItem(string name, int rare, Vector2 size, string tooltip, int tileType)
         {
-            PaintingName = name;
-            FlavourText = flavourText;
-            Author = author;
+            TileItemName = name;
             TileType = tileType;
             Rare = rare;
             Size = size;
+            TileItemTooltip = tooltip;
         }
 
         public sealed override void SetStaticDefaults()
         {
-            DisplayName.SetDefault(PaintingName);
-            Tooltip.SetDefault(Author + "\n" + FlavourText);
+            DisplayName.SetDefault(TileItemName);
+            Tooltip.SetDefault(TileItemTooltip);
         }
 
         public sealed override void SetDefaults()
@@ -205,6 +203,11 @@ namespace CalValEXLite
         }
 
         public sealed override void ModifyTooltips(List<TooltipLine> tooltips) => ItemUtils.CheckRarity(Rare, tooltips);
+    }
+
+    public abstract class ModPaintingItem : BaseTileItem
+    {
+        public ModPaintingItem(string name, int rare, Vector2 size, string author, string flavourText, int tileType) : base(name, rare, size, author + "\n" + flavourText, tileType) { }
     }
 
     public static class ItemUtils
@@ -230,34 +233,34 @@ namespace CalValEXLite
             switch (Rare)
             {
                 case 12:
-                    color = new Color(0, 255, 200);
+                    color = new Color(0, 255, 200); //Turquoise
                     break;
                 case 13:
-                    color = new Color(0, 255, 0);
+                    color = new Color(0, 255, 0); //Pure Green
                     break;
                 case 14:
-                    color = new Color(43, 96, 222);
+                    color = new Color(43, 96, 222); //Dark Blue
                     break;
                 case 15:
-                    color = new Color(108, 45, 199);
+                    color = new Color(108, 45, 199); //Violet
                     break;
                 case 16:
-                    color = new Color(255, 0, 255);
+                    color = new Color(255, 0, 255); //Hot Pink/Developer
                     break;
                 case 17:
-                    color = new Color(Main.DiscoR, Main.DiscoG, Main.DiscoB);
+                    color = new Color(Main.DiscoR, Main.DiscoG, Main.DiscoB); //rainbow (no expert tag on item)
                     break;
                 case 18:
-                    color = new Color(255, 140, 0);
+                    color = new Color(255, 140, 0); //rare variant
                     break;
                 case 19:
-                    color = new Color(139, 0, 0);
+                    color = new Color(139, 0, 0); //dedicated(patron items) (calamity)
                     break;
                 case 20:
-                    color = new Color(107, 240, 255);
+                    color = new Color(107, 240, 255); //dedicated (CalValEX)
                     break;
                 default:
-                    color = Color.White;
+                    color = Color.White; //if all else fails give it CUM
                     break;
             }
 

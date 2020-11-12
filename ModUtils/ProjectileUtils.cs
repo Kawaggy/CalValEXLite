@@ -465,9 +465,10 @@ namespace CalValEXLite
         public virtual float AuraRotation => 0f;
         public float rotation;
         public virtual Vector2 Offset => default;
+        public virtual bool ShouldFlyRotate => true;
         public virtual float TeleportDistance => 2000f;
         public virtual void AddLight() { }
-        public virtual void PetFunctionality(Player player) { }
+        public abstract void PetFunctionality(Player player);
         public virtual void AddAnimation() { }
         public int State { get => (int)projectile.localAI[1]; set => projectile.localAI[1] = value; }
 
@@ -503,13 +504,13 @@ namespace CalValEXLite
         public virtual void SafePostDraw(SpriteBatch spriteBatch, Color lightColor) { }
         public sealed override void PostDraw(SpriteBatch spriteBatch, Color lightColor)
         {
-            SafePostDraw(spriteBatch, lightColor);
             if (Glowmask != null)
             {
                 Texture2D glowmaskTexture = ModContent.GetTexture(Glowmask);
                 Rectangle rectangle = new Rectangle(0, 0, glowmaskTexture.Width, glowmaskTexture.Height);
                 spriteBatch.Draw(glowmaskTexture, projectile.Center - Main.screenPosition, rectangle, Color.White, projectile.rotation, projectile.Size / 2f, projectile.scale, SpriteEffects.None, 0f);
             }
+            SafePostDraw(spriteBatch, lightColor);
             base.PostDraw(spriteBatch, lightColor);
         }
 
@@ -586,6 +587,9 @@ namespace CalValEXLite
                         projectile.velocity.Y = Main.rand.NextBool().ToDirectionInt() * 0.15f;
                         projectile.netUpdate = true;
                     }
+
+                    if (ShouldFlyRotate)
+                        projectile.rotation = projectile.velocity.X * 0.1f;
                     break;
             }
             AddLight();
@@ -882,7 +886,8 @@ namespace CalValEXLite
                             projectile.spriteDirection = projectile.velocity.X > 0 ? 1 : -1;
                     }
 
-                    projectile.rotation = (float)Math.Atan2(projectile.velocity.Y, projectile.velocity.X);
+                    if (ShouldFlyRotate)
+                        projectile.rotation = (float)Math.Atan2(projectile.velocity.Y, projectile.velocity.X);
                     if (projectile.spriteDirection != -1)
                         projectile.rotation += 3.14f;
                     break;
