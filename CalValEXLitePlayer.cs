@@ -25,6 +25,7 @@ namespace CalValEXLite
 
         //WALKING
         public bool AndroombaPet;
+        public bool AngryDoggo;
 
         public void ResetThings()
         {
@@ -45,6 +46,7 @@ namespace CalValEXLite
             AeroSlimePet = false;
 
             AndroombaPet = false;
+            AngryDoggo = false;
         }
 
         public override void ResetEffects() => ResetThings();
