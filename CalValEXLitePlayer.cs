@@ -24,6 +24,7 @@ namespace CalValEXLite
         public bool AeroSlimePet;
 
         //WALKING
+        public bool AndroombaPet;
 
         public void ResetThings()
         {
@@ -42,6 +43,8 @@ namespace CalValEXLite
             TopazGem = false;
 
             AeroSlimePet = false;
+
+            AndroombaPet = false;
         }
 
         public override void ResetEffects() => ResetThings();

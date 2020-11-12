@@ -694,6 +694,9 @@ namespace CalValEXLite
                 case Walking:
                     projectile.tileCollide = true;
 
+                    if (ShouldFlyRotate)
+                        projectile.rotation = 0;
+
                     if (left)
                     {
                         if (projectile.velocity.X > -3.5)
@@ -887,9 +890,7 @@ namespace CalValEXLite
                     }
 
                     if (ShouldFlyRotate)
-                        projectile.rotation = (float)Math.Atan2(projectile.velocity.Y, projectile.velocity.X);
-                    if (projectile.spriteDirection != -1)
-                        projectile.rotation += 3.14f;
+                        projectile.rotation = projectile.velocity.X * 0.1f;
                     break;
             }
             AddLight();
