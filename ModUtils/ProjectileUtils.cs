@@ -619,6 +619,7 @@ namespace CalValEXLite
         public virtual float WalkingSpeedMult => 0.25f;
         public virtual float Gravity => 0.4f;
         public virtual bool CanFly => true;
+        public virtual bool ConstantJump => false;
 
         public const float flyingRangeMultiplier = 5.88235294f;
         public const float backToWalkingRangeMultiplier = 2.35294118f;
@@ -793,6 +794,10 @@ namespace CalValEXLite
                                     projectile.velocity.Y = -9.1f;
                                 }
                             }
+                        }
+                        else if (ConstantJump)
+                        {
+                            projectile.velocity.Y = -9.1f;
                         }
                     }
 
